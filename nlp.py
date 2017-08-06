@@ -1,11 +1,24 @@
 import ipaddress
 import nltk
 import re
+import csv
 import spacy
 import spacy.symbols
 
 
 nlp = spacy.load('en')
+top_domains = list(load_alexa_top_domains())
+valid_domain_regex = re.compile(
+    pattern=r'^(:?[a-z0-9](:?[a-z0-9-]{,61}[a-z0-9])?)(:?\.[a-z0-9](:?[a-z0-9-]{0,61}[a-z0-9])?)*(:?\.[a-z][a-z0-9-]{0,61}[a-z0-9])$',
+    flags=re.IGNORECASE,
+)
+
+
+def load_alexa_top_domains():
+    with open('/data/top-1m.csv') as csvfile:
+        sites_reader = csv.reader(csvfile)
+    for row in sites_reader:
+        yield row[1]
 
 
 def get_verb_ancestors(
@@ -205,16 +218,32 @@ def is_known_process_name(
     return False
 
 
+def is_top_domain(
+    candidate,
+):
+    if valid_domain_regex.match(candidate) is not None:
+        if candidate in top_domains:
+            return True
+
+    return False
+
+
 def is_whitelisted(
     candidate,
 ):
+    candidate_text = candidate.text
     if is_private_ip(
-        candidate=candidate.text,
+        candidate=candidate_text,
     ):
         return True
 
     if is_known_process_name(
-        candidate=candidate.text,
+        candidate=candidate_text,
+    ):
+        return True
+
+    if is_top_domain(
+        candidate=candidate_text,
     ):
         return True
 
