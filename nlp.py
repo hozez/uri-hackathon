@@ -105,6 +105,7 @@ def is_valid_candidate(
         'appos',
         'nsubjpass',
         'acl',
+        'conj',
     ]
 
     ioc_related_verbs = [
@@ -174,21 +175,22 @@ def get_context_terms(ioc_candidate):
     # [dot] instead of . in url
     # hxxp instead of http
     regexes = {
-        'hash-md5'      : r'^([a-fA-F\d]{32})$',
-        'hash-sha1'     : r'^([a-fA-F\d]{40})$',
-        'hash-sha256'   : r'^([a-fA-F\d]{64})$',
+        'hash-md5'      : r'^(?:[a-fA-F\d]{32})$',
+        'hash-sha1'     : r'^(?:[a-fA-F\d]{40})$',
+        'hash-sha256'   : r'^(?:[a-fA-F\d]{64})$',
         'ip'            : r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}',
-        'filename'      : r'([\w_:\\-])+(\.(exe|zip|dll|dat|bin|sys)+)+',
-        'domain'        : r'^(:?[a-z0-9](:?[a-z0-9-]{,61}[a-z0-9])?)(:?\.[a-z0-9](:?[a-z0-9-]{0,61}[a-z0-9])?)*(:?\.[a-z][a-z0-9-]{0,61}[a-z0-9])$',
-        'registry key'  : r'^(HKEY_CURRENT_USER|HKEY_CLASSES_ROOT|HKEY_CURRENT_CONFIG|HKEY_USERS|HKEY_LOCAL_MACHINE|HKCR|HKCC|HKCU|HKU|HKLM)\\.+$',
-        'url'           :r'((?:[a-z][\w\-]+:(?:\/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]|\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\))+(?:\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:\'".,<>?«»“”‘’]))'
+        'filename'      : r'((?:[\w_:\\\.-])+(?:\..{0,5}){1}$)',
+        'domain'        : r'^(?:[a-z0-9](?:[a-z0-9-]{,61}[a-z0-9])?)(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*(?:\.[a-z][a-z0-9-]{0,61}[a-z0-9])$',
+        'registry key'  : r'^(?:hkey_current_user|hkey_classes_root|hkey_current_config|hkey_users|hkey_local_machine|hkcr|hkcc|hkcu|hku|hklm)\\.+$',
+        'url'           :r'(?:(?:[a-z][\w\-]+:(?:\/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]|\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\))+(?:\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:\'".,<>?«»“”‘’]))'
     }
 
     for word in text.split():
         for ioc_type, regex in regexes.items():
             matches = re.findall(regex, word)
             if matches:
-                context_terms[word] = ioc_type
+                for match in matches:
+                    context_terms[match] = ioc_type
 
     return context_terms
 
@@ -208,7 +210,7 @@ def normalize_ioc_candidate(
         string=no_special_chars_string,
     )
 
-    return no_special_chars_string.lower()
+    return no_special_chars_string.lower().strip().rstrip('.')
 
 def get_valid_iocs(text):
     valid_iocs = []
@@ -249,7 +251,7 @@ def get_ioc_candidates():
     #     r'''This section examines a malware that communicates with the domain thisisavirus.com''',
     # ]
 
-    return ['''Two of the five remaining IPs were running HTTP and HTTPS (80 and 443) when I fingerprinted them (31.210.111.154 and 146.0.74.7). Using the same techniques described earlier we were able to continue to hunt the threat, initially searching based upon URL in question and finally located another file hash, 27689bcbab872e321f4c9f9b5b01a6c7e1eca0ee7442afc80c5af48e62d3c5f3. The first DLL, s7otbxdx.dll, is hijacked in order to insert the malicious PLC code.''']
+    return ['''The VMWare looks for the registry key HKLM\SOFTWARE\VMware''']
 
 
 def is_private_ip(
