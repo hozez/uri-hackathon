@@ -136,7 +136,6 @@ def get_context_terms(ioc_candidate):
     return context_terms
 
 def get_valid_iocs(ioc_candidate):
-    import pudb; pudb.set_trace()
     valid_iocs = []
     context_terms = get_context_terms(ioc_candidate)
     if not context_terms:
