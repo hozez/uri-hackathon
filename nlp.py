@@ -1,11 +1,13 @@
 import ipaddress
 import nltk
 import re
+import csv
 import spacy
 import spacy.symbols
 
 
 nlp = spacy.load('en')
+
 
 trusted_organizatons = [
     'microsoft',
@@ -15,6 +17,20 @@ trusted_organizatons = [
     'anti virus',
     'linux',
 ]
+
+def load_alexa_top_domains():
+    with open('/data/top-1m.csv') as csvfile:
+        sites_reader = csv.reader(csvfile)
+        for row in sites_reader:
+            yield row[1]
+
+
+top_domains = list(load_alexa_top_domains())
+valid_domain_regex = re.compile(
+    pattern=r'^(:?[a-z0-9](:?[a-z0-9-]{,61}[a-z0-9])?)(:?\.[a-z0-9](:?[a-z0-9-]{0,61}[a-z0-9])?)*(:?\.[a-z][a-z0-9-]{0,61}[a-z0-9])$',
+    flags=re.IGNORECASE,
+)
+
 def get_ancestors(
     token,
     desired_part_of_speech,
@@ -49,6 +65,7 @@ def traverse_ancestors(
         desired_part_of_speech,
     )
 
+
 def is_verb_negated(
     token,
 ):
@@ -58,12 +75,18 @@ def is_verb_negated(
 
     return False
 
+
 def get_is_verb_applied_by_trusted_organization(
     token,
 ):
-    ancestors = get_ancestors(token, 'NOUN')
-    ancestors += get_ancestors(token, 'PROPN')
-    for ancestor in ancestors:
+
+    # ancestors = get_ancestors(token, 'NOUN')
+    # ancestors += get_ancestors(token, 'PROPN')
+    # for ancestor in ancestors:
+    #     if str(ancestor).lower in trusted_organizatons:
+    #         return True
+
+    if token.head.pos_ == 'NOUN' or token.head.pos_ == 'PROPN':
         if str(ancestor).lower in trusted_organizatons:
             return True
 
@@ -114,7 +137,7 @@ def is_valid_candidate(
     is_any_verb_negated = False
     for verb_ancestor in verb_ancestors:
         is_verb_applied_by_trusted_organization = get_is_verb_applied_by_trusted_organization(verb_ancestor)
-        is_whitelisted_verb = verb_ancestor.lemma_ in whiltelisted_verbs
+        is_whitelisted_verb = verb_ancestor.lemma_ in whiltelisted_verbs or is_verb_applied_by_trusted_organization
         if is_whitelisted_verb:
             has_whitelisted_ancestor_verbs = True
 
@@ -210,28 +233,24 @@ def get_valid_iocs(text):
 
 
 def get_ioc_candidates():
-    with open("/home/uri/Desktop/hackathon/uri-hackathon/ioc_candidates.txt", 'r') as f:
-        ioc_candidates = f.readlines()
+    # return [
+    #     r'''The specimen initially sent TCP SYN requests to ip address 60.10.179.100.''',
+    #     r'''The specimen initially sent TCP SYN requests to ip address 192.168.0.200.''',
+    #     r'''The malware then writes the R resource data to the file C:\WINDOWS\tasksche.exe''',
+    #     r'''The malware executes C:\WINDOWS\tasksche.exe /i with the CreateProcess API.''',
+    #     r'''The malware then attempts to move C:\WINDOWS\tasksche.exe to C:\WINDOWS\qeriuwjhrf, replacing the original file if it exists.''',
+    #     r'''The decrypted data is saved as a DLL (MD5: f351e1fcca0c4ea05fc44d15a17f8b36)''',
+    #     r'''The file r.wnry are extracted from the XIA resource (3e0020fc529b1c2a061016dd2469ba96)''',
+    #     r'''The most obvious indication of malware infection was the addition of a file named “serivces.exe” in “C:\Windows\System32”''',
+    #     r'''The initial payload delivered through the binary named mssecsvc.exe''',
+    #     r'''if the malware can connect to http://iuqerfsodp9ifjaposdfjhgosurijfaewrwergwea.com''',
+    #     r'''This bootstrap DLL reads the main WannaCrypt payload from the resource section and writes it to a file C:\WINDOWS\mssecsvc.exe''',
+    #     r'''This bootstrap DLL reads the main WannaCrypt payload from the resource section and writes it to a file C:\WINDOWS\mssecsvc.exe''',
+    #     r'''This section examines a malware that communicates with the domain google.com''',
+    #     r'''This section examines a malware that communicates with the domain thisisavirus.com''',
+    # ]
 
-        # return ioc_candidates
-        # return [
-        #     r'''Some Anti-Virus (AV) suites protect critical system processes such as SERVICES.EXE and WINLOGON.EXE from the dll injection technique used in ELSA''',
-        #     r'''The most obvious indication of malware infection was the addition of a file named “serivces.exe” in “C:\Windows\System32”''',
-        #     r'''The specimen initially sent TCP SYN requests to ip address 60.10.179.100.''',
-        #     r'''The malware then writes the R resource data to the file C:\WINDOWS\tasksche.exe''',
-        #     r'''The malware executes C:\WINDOWS\tasksche.exe /i with the CreateProcess API.''',
-        #     r'''The malware then attempts to move C:\WINDOWS\tasksche.exe to C:\WINDOWS\qeriuwjhrf, replacing the original file if it exists.''',
-        #     r'''The decrypted data is saved as a DLL (MD5: f351e1fcca0c4ea05fc44d15a17f8b36)''',
-        #     r'''The file r.wnry are extracted from the XIA resource (3e0020fc529b1c2a061016dd2469ba96)''',
-        #     r'''The initial payload delivered through the binary named mssecsvc.exe''',
-        #     r'''if the malware can connect to http://iuqerfsodp9ifjaposdfjhgosurijfaewrwergwea.com''',
-        #     r'''This bootstrap DLL reads the main WannaCrypt payload from the resource section and writes it to a file C:\WINDOWS\mssecsvc.exe''',
-        #     r'''This section examines a malware (hash value: aada169a1cbd822e1402991e6a9c9238) that was caught by a private honeypot''',
-        # ]
-
-        return ['''Two of the five remaining IPs were running HTTP and HTTPS (80 and 443) when I fingerprinted them (31.210.111.154 and 146.0.74.7).
-                Using the same techniques described earlier we were able to continue to hunt the threat, initially searching based upon URL in question and finally located another file hash, 27689bcbab872e321f4c9f9b5b01a6c7e1eca0ee7442afc80c5af48e62d3c5f3.
-                The first DLL, s7otbxdx.dll, is hijacked in order to insert the malicious PLC code.''']
+    return ['''Two of the five remaining IPs were running HTTP and HTTPS (80 and 443) when I fingerprinted them (31.210.111.154 and 146.0.74.7). Using the same techniques described earlier we were able to continue to hunt the threat, initially searching based upon URL in question and finally located another file hash, 27689bcbab872e321f4c9f9b5b01a6c7e1eca0ee7442afc80c5af48e62d3c5f3. The first DLL, s7otbxdx.dll, is hijacked in order to insert the malicious PLC code.''']
 
 
 def is_private_ip(
@@ -260,16 +279,32 @@ def is_known_process_name(
     return False
 
 
+def is_top_domain(
+    candidate,
+):
+    if valid_domain_regex.match(candidate) is not None:
+        if candidate in top_domains:
+            return True
+
+    return False
+
+
 def is_whitelisted(
     candidate,
 ):
+    candidate_text = candidate.text
     if is_private_ip(
-        candidate=candidate.text,
+        candidate=candidate_text,
     ):
         return True
 
     if is_known_process_name(
-        candidate=candidate.text,
+        candidate=candidate_text,
+    ):
+        return True
+
+    if is_top_domain(
+        candidate=candidate_text,
     ):
         return True
 

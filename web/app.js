@@ -16,6 +16,8 @@ $(document).ready(function() {
 
         preRequestClean();
 
+        setLoadingState();
+
         $('.preloader-wrapper').addClass('active');
         $('.preloader-wrapper').fadeIn();
 
@@ -41,7 +43,7 @@ $(document).ready(function() {
        
         $('#data--text').html(newText);
 
-        $('.preloader-wrapper').fadeOut();
+        setPostLoadingState();
     }
 
     function onClearClick() {
@@ -59,5 +61,18 @@ $(document).ready(function() {
         $('.result ul').html('');
         $('.result .title').text('0 IoC found');
         $('#data--text .highlight').removeClass('highlight');
+    }
+
+    function setLoadingState() {
+        $('#action--scan').addClass('disabled');
+        $('#action--clear').addClass('disabled');
+        $('#data--text').attr('contenteditable', false);
+    }
+
+    function setPostLoadingState() {
+        $('.preloader-wrapper').fadeOut();
+        $('#action--scan').removeClass('disabled');
+        $('#action--clear').removeClass('disabled');
+        $('#data--text').attr('contenteditable', true);
     }
 });
