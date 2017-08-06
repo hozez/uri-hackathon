@@ -125,7 +125,7 @@ def get_context_terms(ioc_candidate):
         'hash-sha256'   : r'^([a-fA-F\d]{64})$',
         'ip'            : r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}',
         'domain'        : r'^(\w\.|\w[A-Za-z0-9-]{0,61}\w\.){1,3}(?!exe|zip|dll|dat|bin|sys)[A-Za-z]{2,6}$',
-        'filename'      : r'\\?[\w-]+\.[\w]+$',
+        'filename'      : r'\\?[\w-]+\.[\w]+',
         'registry key'  : r'^(HKEY_CURRENT_USER|HKCU|HKLM)\\.+$',
         'url'           : r'((?:[a-z][\w\-]+:(?:\/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]|\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\))+(?:\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:\'".,<>?«»“”‘’]))'
     }
@@ -150,10 +150,11 @@ def get_valid_iocs(text):
         analyzed_candidate = nlp(ioc_candidate)
 
         for token in analyzed_candidate:
-            if str(token) in context_terms.keys():
-                if is_valid_candidate(token):
-                    if not is_whitelisted(token):
-                        valid_iocs.append(str(token))
+            for key in context_terms.keys():
+                if str(token) in key:
+                    if is_valid_candidate(token):
+                        if not is_whitelisted(token):
+                            valid_iocs.append(str(token))
 
     return valid_iocs
 
@@ -164,7 +165,7 @@ def get_ioc_candidates():
 
         # return ioc_candidates
         return [
-            r'''The specimen initially sent TCP SYN requests to ip address 60.10.179.100. The malware then writes the R resource data to the file C:\WINDOWS\tasksche.exe''',
+            r'''The decrypted data is saved as a DLL (MD5: f351e1fcca0c4ea05fc44d15a17f8b36). The malware executes C:\WINDOWS\tasksche.exe /i with the CreateProcess API. The specimen initially sent TCP SYN requests to ip address 60.10.179.100. The malware then writes the R resource data to the file C:\WINDOWS\tasksche.exe''',
             # r'''The malware then writes the R resource data to the file C:\WINDOWS\tasksche.exe''',
             # r'''The malware executes C:\WINDOWS\tasksche.exe /i with the CreateProcess API.''',
             # r'''The malware then attempts to move C:\WINDOWS\tasksche.exe to C:\WINDOWS\qeriuwjhrf, replacing the original file if it exists.''',
