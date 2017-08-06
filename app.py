@@ -64,3 +64,8 @@ def analyze_sentence():
         json.dumps(response),
         200,
     )
+
+@flask_app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
