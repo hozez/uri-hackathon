@@ -7,19 +7,20 @@ import spacy.symbols
 
 
 nlp = spacy.load('en')
-top_domains = list(load_alexa_top_domains())
-valid_domain_regex = re.compile(
-    pattern=r'^(:?[a-z0-9](:?[a-z0-9-]{,61}[a-z0-9])?)(:?\.[a-z0-9](:?[a-z0-9-]{0,61}[a-z0-9])?)*(:?\.[a-z][a-z0-9-]{0,61}[a-z0-9])$',
-    flags=re.IGNORECASE,
-)
 
 
 def load_alexa_top_domains():
     with open('/data/top-1m.csv') as csvfile:
         sites_reader = csv.reader(csvfile)
-    for row in sites_reader:
-        yield row[1]
+        for row in sites_reader:
+            yield row[1]
 
+
+top_domains = list(load_alexa_top_domains())
+valid_domain_regex = re.compile(
+    pattern=r'^(:?[a-z0-9](:?[a-z0-9-]{,61}[a-z0-9])?)(:?\.[a-z0-9](:?[a-z0-9-]{0,61}[a-z0-9])?)*(:?\.[a-z][a-z0-9-]{0,61}[a-z0-9])$',
+    flags=re.IGNORECASE,
+)
 
 def get_verb_ancestors(
     token,
@@ -193,23 +194,26 @@ def get_valid_iocs(text):
 
 
 def get_ioc_candidates():
-    with open("/home/uri/Desktop/hackathon/uri-hackathon/ioc_candidates.txt", 'r') as f:
-        ioc_candidates = f.readlines()
+    # with open("/home/uri/Desktop/hackathon/uri-hackathon/ioc_candidates.txt", 'r') as f:
+    #     ioc_candidates = f.readlines()
 
-        # return ioc_candidates
-        return [
-            # r'''The specimen initially sent TCP SYN requests to ip address 60.10.179.100.''',
-            # r'''The malware then writes the R resource data to the file C:\WINDOWS\tasksche.exe''',
-            # r'''The malware executes C:\WINDOWS\tasksche.exe /i with the CreateProcess API.''',
-            # r'''The malware then attempts to move C:\WINDOWS\tasksche.exe to C:\WINDOWS\qeriuwjhrf, replacing the original file if it exists.''',
-            r'''The decrypted data is saved as a DLL (MD5: f351e1fcca0c4ea05fc44d15a17f8b36)''',
-            r'''The file r.wnry are extracted from the XIA resource (3e0020fc529b1c2a061016dd2469ba96)''',
-            # r'''The most obvious indication of malware infection was the addition of a file named “serivces.exe” in “C:\Windows\System32”''',
-            # r'''The initial payload delivered through the binary named mssecsvc.exe''',
-            # r'''if the malware can connect to http://iuqerfsodp9ifjaposdfjhgosurijfaewrwergwea.com''',
-            # r'''This bootstrap DLL reads the main WannaCrypt payload from the resource section and writes it to a file C:\WINDOWS\mssecsvc.exe''',
-            # r'''This section examines a malware (hash value: aada169a1cbd822e1402991e6a9c9238) that was caught by a private honeypot''',
-        ]
+    #     # return ioc_candidates
+    return [
+        r'''The specimen initially sent TCP SYN requests to ip address 60.10.179.100.''',
+        r'''The specimen initially sent TCP SYN requests to ip address 192.168.0.200.''',
+        r'''The malware then writes the R resource data to the file C:\WINDOWS\tasksche.exe''',
+        r'''The malware executes C:\WINDOWS\tasksche.exe /i with the CreateProcess API.''',
+        r'''The malware then attempts to move C:\WINDOWS\tasksche.exe to C:\WINDOWS\qeriuwjhrf, replacing the original file if it exists.''',
+        r'''The decrypted data is saved as a DLL (MD5: f351e1fcca0c4ea05fc44d15a17f8b36)''',
+        r'''The file r.wnry are extracted from the XIA resource (3e0020fc529b1c2a061016dd2469ba96)''',
+        r'''The most obvious indication of malware infection was the addition of a file named “serivces.exe” in “C:\Windows\System32”''',
+        r'''The initial payload delivered through the binary named mssecsvc.exe''',
+        r'''if the malware can connect to http://iuqerfsodp9ifjaposdfjhgosurijfaewrwergwea.com''',
+        r'''This bootstrap DLL reads the main WannaCrypt payload from the resource section and writes it to a file C:\WINDOWS\mssecsvc.exe''',
+        r'''This bootstrap DLL reads the main WannaCrypt payload from the resource section and writes it to a file C:\WINDOWS\mssecsvc.exe''',
+        r'''This section examines a malware that communicates with the domain google.com''',
+        r'''This section examines a malware that communicates with the domain thisisavirus.com''',
+    ]
 
 
 def is_private_ip(
