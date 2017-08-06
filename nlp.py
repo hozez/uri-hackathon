@@ -7,32 +7,46 @@ import spacy.symbols
 
 nlp = spacy.load('en')
 
-
-def get_verb_ancestors(
+trusted_organizatons = [
+    'microsoft',
+    'vmware',
+    'antivirus',
+    'anti-virus',
+    'anti virus',
+    'linux',
+]
+def get_ancestors(
     token,
+    desired_part_of_speech,
 ):
     ancestors = []
-    ancestors = traverse_verb_ancestors(
+    ancestors = traverse_ancestors(
         token,
         ancestors,
+        desired_part_of_speech,
     )
 
     return ancestors
 
 
-def traverse_verb_ancestors(
+def traverse_ancestors(
     token,
     ancestors,
+    desired_part_of_speech,
 ):
     if token.head == token or token is None:
         return ancestors
 
-    if token.head.pos_ == 'VERB':
+    if desired_part_of_speech:
+        if token.head.pos_ == desired_part_of_speech:
+            ancestors.append(token.head)
+    else:
         ancestors.append(token.head)
 
-    return traverse_verb_ancestors(
+    return traverse_ancestors(
         token.head,
         ancestors,
+        desired_part_of_speech,
     )
 
 def is_verb_negated(
@@ -43,6 +57,18 @@ def is_verb_negated(
             return True
 
     return False
+
+def get_is_verb_applied_by_trusted_organization(
+    token,
+):
+    ancestors = get_ancestors(token, 'NOUN')
+    ancestors += get_ancestors(token, 'PROPN')
+    for ancestor in ancestors:
+        if str(ancestor).lower in trusted_organizatons:
+            return True
+
+    return False
+
 
 def is_valid_candidate(
     np,
@@ -72,18 +98,22 @@ def is_valid_candidate(
     whiltelisted_verbs = [
         'patch',
         'release',
+        'protect',
+        'mitigate',
+        'cures',
     ]
 
     allowed_dependency = np.dep_ in allowed_deps
     if not allowed_dependency:
         return False
 
-    verb_ancestors = get_verb_ancestors(np)
+    verb_ancestors = get_ancestors(np, 'VERB')
 
     has_whitelisted_ancestor_verbs = False
     has_ioc_related_ancestor_verbs = False
     is_any_verb_negated = False
     for verb_ancestor in verb_ancestors:
+        is_verb_applied_by_trusted_organization = get_is_verb_applied_by_trusted_organization(verb_ancestor)
         is_whitelisted_verb = verb_ancestor.lemma_ in whiltelisted_verbs
         if is_whitelisted_verb:
             has_whitelisted_ancestor_verbs = True
@@ -142,7 +172,7 @@ def get_context_terms(ioc_candidate):
 def normalize_ioc_candidate(
     ioc_candidate,
 ):
-    special_chars = '''-|@#$()"'''
+    special_chars = '''”“-|@#$()"'''
     no_special_chars_string = ''
 
     for char in ioc_candidate:
@@ -155,7 +185,7 @@ def normalize_ioc_candidate(
         string=no_special_chars_string,
     )
 
-    return no_special_chars_string
+    return no_special_chars_string.lower()
 
 def get_valid_iocs(text):
     valid_iocs = []
@@ -184,19 +214,24 @@ def get_ioc_candidates():
         ioc_candidates = f.readlines()
 
         # return ioc_candidates
-        return [
-            # r'''The specimen initially sent TCP SYN requests to ip address 60.10.179.100.''',
-            # r'''The malware then writes the R resource data to the file C:\WINDOWS\tasksche.exe''',
-            # r'''The malware executes C:\WINDOWS\tasksche.exe /i with the CreateProcess API.''',
-            # r'''The malware then attempts to move C:\WINDOWS\tasksche.exe to C:\WINDOWS\qeriuwjhrf, replacing the original file if it exists.''',
-            r'''The decrypted data is saved as a DLL (MD5: f351e1fcca0c4ea05fc44d15a17f8b36)''',
-            r'''The file r.wnry are extracted from the XIA resource (3e0020fc529b1c2a061016dd2469ba96)''',
-            # r'''The most obvious indication of malware infection was the addition of a file named “serivces.exe” in “C:\Windows\System32”''',
-            # r'''The initial payload delivered through the binary named mssecsvc.exe''',
-            # r'''if the malware can connect to http://iuqerfsodp9ifjaposdfjhgosurijfaewrwergwea.com''',
-            # r'''This bootstrap DLL reads the main WannaCrypt payload from the resource section and writes it to a file C:\WINDOWS\mssecsvc.exe''',
-            # r'''This section examines a malware (hash value: aada169a1cbd822e1402991e6a9c9238) that was caught by a private honeypot''',
-        ]
+        # return [
+        #     r'''Some Anti-Virus (AV) suites protect critical system processes such as SERVICES.EXE and WINLOGON.EXE from the dll injection technique used in ELSA''',
+        #     r'''The most obvious indication of malware infection was the addition of a file named “serivces.exe” in “C:\Windows\System32”''',
+        #     r'''The specimen initially sent TCP SYN requests to ip address 60.10.179.100.''',
+        #     r'''The malware then writes the R resource data to the file C:\WINDOWS\tasksche.exe''',
+        #     r'''The malware executes C:\WINDOWS\tasksche.exe /i with the CreateProcess API.''',
+        #     r'''The malware then attempts to move C:\WINDOWS\tasksche.exe to C:\WINDOWS\qeriuwjhrf, replacing the original file if it exists.''',
+        #     r'''The decrypted data is saved as a DLL (MD5: f351e1fcca0c4ea05fc44d15a17f8b36)''',
+        #     r'''The file r.wnry are extracted from the XIA resource (3e0020fc529b1c2a061016dd2469ba96)''',
+        #     r'''The initial payload delivered through the binary named mssecsvc.exe''',
+        #     r'''if the malware can connect to http://iuqerfsodp9ifjaposdfjhgosurijfaewrwergwea.com''',
+        #     r'''This bootstrap DLL reads the main WannaCrypt payload from the resource section and writes it to a file C:\WINDOWS\mssecsvc.exe''',
+        #     r'''This section examines a malware (hash value: aada169a1cbd822e1402991e6a9c9238) that was caught by a private honeypot''',
+        # ]
+
+        return ['''Two of the five remaining IPs were running HTTP and HTTPS (80 and 443) when I fingerprinted them (31.210.111.154 and 146.0.74.7).
+                Using the same techniques described earlier we were able to continue to hunt the threat, initially searching based upon URL in question and finally located another file hash, 27689bcbab872e321f4c9f9b5b01a6c7e1eca0ee7442afc80c5af48e62d3c5f3.
+                The first DLL, s7otbxdx.dll, is hijacked in order to insert the malicious PLC code.''']
 
 
 def is_private_ip(
