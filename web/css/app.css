@@ -12,7 +12,9 @@
 }
 
 .result .list {
-    height: 324px;
+    height: 304px;
+    overflow-y: auto;
+    margin-bottom: 20px;
 }
 
 .result .list p {
