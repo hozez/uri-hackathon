@@ -2,7 +2,7 @@ import ipaddress
 import nltk
 import re
 import spacy
-import spacy.symbols # nsubj, VERB, dobj
+import spacy.symbols
 
 
 nlp = spacy.load('en')
@@ -165,7 +165,7 @@ def get_ioc_candidates():
 
         # return ioc_candidates
         return [
-            r'''The decrypted data is saved as a DLL (MD5: f351e1fcca0c4ea05fc44d15a17f8b36). The malware executes C:\WINDOWS\tasksche.exe /i with the CreateProcess API. The specimen initially sent TCP SYN requests to ip address 60.10.179.100. The malware then writes the R resource data to the file C:\WINDOWS\tasksche.exe''',
+            r'''The specimen initially sent TCP SYN requests to ip address 60.10.179.100. The malware then writes the R resource data to the file C:\WINDOWS\tasksche.exe''',
             # r'''The malware then writes the R resource data to the file C:\WINDOWS\tasksche.exe''',
             # r'''The malware executes C:\WINDOWS\tasksche.exe /i with the CreateProcess API.''',
             # r'''The malware then attempts to move C:\WINDOWS\tasksche.exe to C:\WINDOWS\qeriuwjhrf, replacing the original file if it exists.''',
