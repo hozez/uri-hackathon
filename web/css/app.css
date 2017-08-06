@@ -5,10 +5,20 @@
     overflow-y: auto;
 }
 
-.content {
+.text .content {
     position: relative;
     height: 300px;
     margin: 20px 0;
+}
+
+.result .list {
+    height: 324px;
+}
+
+.result .list p {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .preloader-wrapper {
@@ -20,4 +30,11 @@
 .highlight {
     color: #9c27b0;
     font-weight: bold;
+}
+
+#toast-container {
+  top: auto !important;
+  right: 7% !important;
+  bottom: 10%;
+  left: auto !important;
 }
