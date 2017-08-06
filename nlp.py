@@ -301,6 +301,7 @@ def is_known_process_name(
         'schedlgu.exe',
         'calc.exe',
         'kernel32.dll',
+        'rundll32.dll',
     ]
     if candidate in well_known_process_names:
         return True
