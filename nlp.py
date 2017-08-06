@@ -223,11 +223,10 @@ def get_valid_iocs(text):
         analyzed_candidate = nlp(ioc_candidate)
 
         for token in analyzed_candidate:
-            for key in context_terms.keys():
-                if str(token) in key:
-                    if is_valid_candidate(token):
-                        if not is_whitelisted(token):
-                            valid_iocs.append(str(token))
+            if str(token) in context_terms.keys():
+                if is_valid_candidate(token):
+                    if not is_whitelisted(token):
+                        valid_iocs.append(str(token))
 
     return valid_iocs
 
