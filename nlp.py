@@ -16,10 +16,13 @@ trusted_organizatons = [
     'anti-virus',
     'anti virus',
     'linux',
+    'google',
+    'mcafee',
+    'symantec',
 ]
 
 def load_alexa_top_domains():
-    with open('/data/top-1m.csv') as csvfile:
+    with open('top-1m.csv') as csvfile:
         sites_reader = csv.reader(csvfile)
         for row in sites_reader:
             yield row[1]
@@ -85,10 +88,10 @@ def get_is_verb_applied_by_trusted_organization(
     # for ancestor in ancestors:
     #     if str(ancestor).lower in trusted_organizatons:
     #         return True
-
-    if token.head.pos_ == 'NOUN' or token.head.pos_ == 'PROPN':
-        if str(token.head).lower in trusted_organizatons:
-            return True
+    for child in token.children:
+        if child.pos_ == 'NOUN' or child.pos_ == 'PROPN':
+            if str(child).lower() in trusted_organizatons:
+                return True
 
     return False
 
@@ -251,7 +254,7 @@ def get_ioc_candidates():
     #     r'''This section examines a malware that communicates with the domain thisisavirus.com''',
     # ]
 
-    return ['''The VMWare looks for the registry key HKLM\SOFTWARE\VMware''']
+    return ['''In order to prevent user from finding the malicious file by its creation timestamp it is changed to the timestamp of kernel32.dll existing on the local system''']
 
 
 def is_private_ip(
@@ -273,6 +276,7 @@ def is_known_process_name(
     well_known_process_names = [
         'schedlgu.exe',
         'calc.exe',
+        'kernel32.dll',
     ]
     if candidate in well_known_process_names:
         return True
