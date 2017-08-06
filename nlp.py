@@ -55,6 +55,7 @@ def is_valid_candidate(
         'nummod',
         'appos',
         'nsubjpass',
+        'acl',
     ]
 
     ioc_related_verbs = [
@@ -138,11 +139,30 @@ def get_context_terms(ioc_candidate):
 
     return context_terms
 
+def normalize_ioc_candidate(
+    ioc_candidate,
+):
+    special_chars = '''-|@#$()"'''
+    no_special_chars_string = ''
+
+    for char in ioc_candidate:
+        if char not in special_chars:
+            no_special_chars_string += char
+
+    no_special_chars_string = re.sub(
+        pattern='\s+',
+        repl=' ',
+        string=no_special_chars_string,
+    )
+
+    return no_special_chars_string
+
 def get_valid_iocs(text):
     valid_iocs = []
     ioc_candidates = nltk.sent_tokenize(text)
 
     for ioc_candidate in ioc_candidates:
+        ioc_candidate = normalize_ioc_candidate(ioc_candidate)
         context_terms = get_context_terms(ioc_candidate)
         if not context_terms:
             continue
@@ -165,12 +185,12 @@ def get_ioc_candidates():
 
         # return ioc_candidates
         return [
-            r'''The specimen initially sent TCP SYN requests to ip address 60.10.179.100. The malware then writes the R resource data to the file C:\WINDOWS\tasksche.exe''',
+            # r'''The specimen initially sent TCP SYN requests to ip address 60.10.179.100.''',
             # r'''The malware then writes the R resource data to the file C:\WINDOWS\tasksche.exe''',
             # r'''The malware executes C:\WINDOWS\tasksche.exe /i with the CreateProcess API.''',
             # r'''The malware then attempts to move C:\WINDOWS\tasksche.exe to C:\WINDOWS\qeriuwjhrf, replacing the original file if it exists.''',
-            # r'''The decrypted data is saved as a DLL (MD5: f351e1fcca0c4ea05fc44d15a17f8b36)''',
-            # r'''The file r.wnry are extracted from the XIA resource (3e0020fc529b1c2a061016dd2469ba96)''',
+            r'''The decrypted data is saved as a DLL (MD5: f351e1fcca0c4ea05fc44d15a17f8b36)''',
+            r'''The file r.wnry are extracted from the XIA resource (3e0020fc529b1c2a061016dd2469ba96)''',
             # r'''The most obvious indication of malware infection was the addition of a file named “serivces.exe” in “C:\Windows\System32”''',
             # r'''The initial payload delivered through the binary named mssecsvc.exe''',
             # r'''if the malware can connect to http://iuqerfsodp9ifjaposdfjhgosurijfaewrwergwea.com''',
