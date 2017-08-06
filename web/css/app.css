@@ -1,0 +1,23 @@
+#data--text {
+    height: 100%;
+    padding: 10px;
+    border: 2px solid #26a69a;
+    overflow-y: auto;
+}
+
+.content {
+    position: relative;
+    height: 300px;
+    margin: 20px 0;
+}
+
+.preloader-wrapper {
+    position: absolute;
+    top: calc(50% - 25px);
+    left: calc(50% - 50px);
+}
+
+.highlight {
+    color: #9c27b0;
+    font-weight: bold;
+}
