@@ -58,7 +58,11 @@ $(document).ready(function() {
     }
 
     function highlightWord(text, word) {
-        var regex = new RegExp(word, 'gi');
+        var wordWithoutSpecialChar = word;
+        wordWithoutSpecialChar = wordWithoutSpecialChar.replace(/\\/g, '\\\\');
+        wordWithoutSpecialChar = wordWithoutSpecialChar.replace(/\./g, '\.');
+
+        var regex = new RegExp(wordWithoutSpecialChar, 'gi');
  
         return text.replace(regex, '<span class="highlight">' + word + '</span>');
     }
