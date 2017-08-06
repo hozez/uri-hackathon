@@ -1,13 +1,16 @@
 import ipaddress
+import tldextract
 import nltk
 import re
 import csv
 import spacy
 import spacy.symbols
-
+import collections
 
 nlp = spacy.load('en')
-
+tld_extractor = tldextract.TLDExtract(
+    include_psl_private_domains=True,
+)
 
 trusted_organizatons = [
     'microsoft',
@@ -111,6 +114,7 @@ def is_valid_candidate(
         'communicate',
         'download',
         'install',
+        'connect'
         'write',
         'read',
         'wipe',
@@ -133,7 +137,6 @@ def is_valid_candidate(
     verb_ancestors = get_ancestors(np, 'VERB')
 
     has_whitelisted_ancestor_verbs = False
-    has_ioc_related_ancestor_verbs = False
     is_any_verb_negated = False
     for verb_ancestor in verb_ancestors:
         is_verb_applied_by_trusted_organization = get_is_verb_applied_by_trusted_organization(verb_ancestor)
@@ -164,33 +167,50 @@ def cleanText(text):
 
     return clean
 
+def determined_match_correct(
+    word,
+    ioc_type,
+):
+    if ioc_type == 'ip':
+        try:
+            ipaddress.IPv4Address(word)
+        except ValueError:
+            return False
+    elif ioc_type == 'domain':
+        if not tld_extractor(
+            url=word,
+        ).suffix:
+            return False
+
+    return True
+
+
 def get_context_terms(ioc_candidate):
     context_terms = {}
 
     text = cleanText(ioc_candidate)
 
-    # TODO url
-    # file extensions
-    # [dot] instead of . in url
-    # hxxp instead of http
-    regexes = {
-        'hash-md5'      : r'^([a-fA-F\d]{32})$',
-        'hash-sha1'     : r'^([a-fA-F\d]{40})$',
-        'hash-sha256'   : r'^([a-fA-F\d]{64})$',
-        'ip'            : r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}',
-        'filename'      : r'([\w_:\\-])+(\.(exe|zip|dll|dat|bin|sys)+)+',
-        'domain'        : r'^(:?[a-z0-9](:?[a-z0-9-]{,61}[a-z0-9])?)(:?\.[a-z0-9](:?[a-z0-9-]{0,61}[a-z0-9])?)*(:?\.[a-z][a-z0-9-]{0,61}[a-z0-9])$',
-        'registry key'  : r'^(HKEY_CURRENT_USER|HKEY_CLASSES_ROOT|HKEY_CURRENT_CONFIG|HKEY_USERS|HKEY_LOCAL_MACHINE|HKCR|HKCC|HKCU|HKU|HKLM)\\.+$',
-        'url'           :r'((?:[a-z][\w\-]+:(?:\/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]|\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\))+(?:\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:\'".,<>?«»“”‘’]))'
-    }
+    regexes = collections.OrderedDict()
+    regexes['hash-md5']     = r'^([a-fA-F\d]{32})$',
+    regexes['hash-sha1']    = r'^([a-fA-F\d]{40})$',
+    regexes['hash-sha256']  = r'^([a-fA-F\d]{64})$',
+    regexes['ip']           = r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}',
+    regexes['domain']       = r'^((?:[a-z0-9](?:[a-z0-9-]{,61}[a-z0-9])?)(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*(?:\.[a-z][a-z0-9-]{0,61}[a-z0-9]))$',
+    regexes['filename']     = r'((?:[\w_:\\\.-])+(?:\..{0,5}){1}$)',
+    regexes['registry key'] = r'^((?:HKEY_CURRENT_USER|HKEY_CLASSES_ROOT|HKEY_CURRENT_CONFIG|HKEY_USERS|HKEY_LOCAL_MACHINE|HKCR|HKCC|HKCU|HKU|HKLM)(?:\\{1,2}[\w]|[\w])+)$',
+    regexes['url']          = r'^((?:(?:hxxp|hxxps|http|https|ftp)://)?(?:((:?[a-z0-9](:?[a-z0-9-]{,61}[a-z0-9])?)(:?\.[a-z0-9](:?[a-z0-9-]{0,61}[a-z0-9])?)*(:?\.[a-z][a-z0-9-]{0,61}[a-z0-9]))|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(?:\d+)?(?:/.*)?)$'
 
     for word in text.split():
         for ioc_type, regex in regexes.items():
-            matches = re.findall(regex, word)
+            matches = re.findall(regex[0], word)
             if matches:
-                context_terms[word] = ioc_type
+                if determined_match_correct(word, ioc_type):
+                    context_terms[matches[0]] = ioc_type
+
+                    break
 
     return context_terms
+
 
 def normalize_ioc_candidate(
     ioc_candidate,
@@ -233,24 +253,24 @@ def get_valid_iocs(text):
 
 
 def get_ioc_candidates():
-    # return [
-    #     r'''The specimen initially sent TCP SYN requests to ip address 60.10.179.100.''',
-    #     r'''The specimen initially sent TCP SYN requests to ip address 192.168.0.200.''',
-    #     r'''The malware then writes the R resource data to the file C:\WINDOWS\tasksche.exe''',
-    #     r'''The malware executes C:\WINDOWS\tasksche.exe /i with the CreateProcess API.''',
-    #     r'''The malware then attempts to move C:\WINDOWS\tasksche.exe to C:\WINDOWS\qeriuwjhrf, replacing the original file if it exists.''',
-    #     r'''The decrypted data is saved as a DLL (MD5: f351e1fcca0c4ea05fc44d15a17f8b36)''',
-    #     r'''The file r.wnry are extracted from the XIA resource (3e0020fc529b1c2a061016dd2469ba96)''',
-    #     r'''The most obvious indication of malware infection was the addition of a file named “serivces.exe” in “C:\Windows\System32”''',
-    #     r'''The initial payload delivered through the binary named mssecsvc.exe''',
-    #     r'''if the malware can connect to http://iuqerfsodp9ifjaposdfjhgosurijfaewrwergwea.com''',
-    #     r'''This bootstrap DLL reads the main WannaCrypt payload from the resource section and writes it to a file C:\WINDOWS\mssecsvc.exe''',
-    #     r'''This bootstrap DLL reads the main WannaCrypt payload from the resource section and writes it to a file C:\WINDOWS\mssecsvc.exe''',
-    #     r'''This section examines a malware that communicates with the domain google.com''',
-    #     r'''This section examines a malware that communicates with the domain thisisavirus.com''',
-    # ]
+    return [
+        r'''The specimen initially sent TCP SYN requests to ip address 60.10.179.100.''',
+        r'''The specimen initially sent TCP SYN requests to ip address 192.168.0.200.''',
+        r'''The malware then writes the R resource data to the file C:\WINDOWS\tasksche.exe''',
+        r'''The malware executes C:\WINDOWS\tasksche.exe /i with the CreateProcess API.''',
+        r'''The malware then attempts to move C:\WINDOWS\tasksche.exe to C:\WINDOWS\qeriuwjhrf, replacing the original file if it exists.''',
+        r'''The decrypted data is saved as a DLL (MD5: f351e1fcca0c4ea05fc44d15a17f8b36)''',
+        r'''The file r.wnry are extracted from the XIA resource (3e0020fc529b1c2a061016dd2469ba96)''',
+        r'''The most obvious indication of malware infection was the addition of a file named “serivces.exe” in “C:\Windows\System32”''',
+        r'''The initial payload delivered through the binary named mssecsvc.exe''',
+        r'''if the malware can connect to http://iuqerfsodp9ifjaposdfjhgosurijfaewrwergwea.com''',
+        r'''This bootstrap DLL reads the main WannaCrypt payload from the resource section and writes it to a file C:\WINDOWS\mssecsvc.exe''',
+        r'''This bootstrap DLL reads the main WannaCrypt payload from the resource section and writes it to a file C:\WINDOWS\mssecsvc.exe''',
+        r'''This section examines a malware that communicates with the domain google.com''',
+        r'''This section examines a malware that communicates with the domain thisisavirus.com''',
+    ]
 
-    return ['''Two of the five remaining IPs were running HTTP and HTTPS (80 and 443) when I fingerprinted them (31.210.111.154 and 146.0.74.7). Using the same techniques described earlier we were able to continue to hunt the threat, initially searching based upon URL in question and finally located another file hash, 27689bcbab872e321f4c9f9b5b01a6c7e1eca0ee7442afc80c5af48e62d3c5f3. The first DLL, s7otbxdx.dll, is hijacked in order to insert the malicious PLC code.''']
+    # return ['''Two of the five remaining IPs were running HTTP and HTTPS (80 and 443) when I fingerprinted them (31.210.111.154 and 146.0.74.7). Using the same techniques described earlier we were able to continue to hunt the threat, initially searching based upon URL in question and finally located another file hash, 27689bcbab872e321f4c9f9b5b01a6c7e1eca0ee7442afc80c5af48e62d3c5f3. The first DLL, s7otbxdx.dll, is hijacked in order to insert the malicious PLC code.''']
 
 
 def is_private_ip(
@@ -314,13 +334,10 @@ def is_whitelisted(
 def main():
     ioc_candidates = get_ioc_candidates()
     for ioc_candidate in ioc_candidates:
-        try:
-            valid_iocs = get_valid_iocs(ioc_candidate)
-            print(ioc_candidate.strip())
-            print(valid_iocs)
-            print()
-        except Exception as ex:
-            print(ex)
+        valid_iocs = get_valid_iocs(ioc_candidate)
+        print(ioc_candidate.strip())
+        print(valid_iocs)
+        print()
 
 
 if __name__ == '__main__':
