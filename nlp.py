@@ -2,7 +2,7 @@ import ipaddress
 import nltk
 import re
 import spacy
-import spacy.symbols # nsubj, VERB, dobj
+import spacy.symbols
 
 
 nlp = spacy.load('en')
@@ -150,10 +150,12 @@ def get_valid_iocs(text):
         analyzed_candidate = nlp(ioc_candidate)
 
         for token in analyzed_candidate:
-            if str(token) in context_terms.keys():
-                if is_valid_candidate(token):
-                    if not is_whitelisted(token):
-                        valid_iocs.append(str(token))
+            if (
+                str(token) in context_terms.keys() and
+                is_valid_candidate(token)
+                and not is_whitelisted(token)
+            ):
+                valid_iocs.append(str(token))
 
     return valid_iocs
 
