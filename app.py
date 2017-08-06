@@ -49,6 +49,16 @@ def error_handler(exception):
 
 @flask_app.route('/analyze_sentence', methods=['POST', 'OPTIONS'])
 def analyze_sentence():
+    if flask.request.method != 'POST':
+        response = {
+            'success': True,
+        }
+
+        return (
+            json.dumps(response),
+            200,
+        )
+
     request = flask.request.json
 
     iocs = nlp.get_valid_iocs(request['text'])
@@ -64,6 +74,7 @@ def analyze_sentence():
         json.dumps(response),
         200,
     )
+
 
 @flask_app.after_request
 def after_request(response):
