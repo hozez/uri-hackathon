@@ -1,3 +1,5 @@
+import ipaddress
+import nltk
 import re
 import spacy
 import spacy.symbols # nsubj, VERB, dobj
@@ -52,6 +54,7 @@ def is_valid_candidate(
         'oprd',
         'nummod',
         'appos',
+        'nsubjpass',
     ]
 
     ioc_related_verbs = [
@@ -84,16 +87,16 @@ def is_valid_candidate(
         if is_whitelisted_verb:
             has_whitelisted_ancestor_verbs = True
 
-        is_ioc_related_verb = verb_ancestor.lemma_ in ioc_related_verbs
-        if is_ioc_related_verb:
-            has_ioc_related_ancestor_verbs = True
+        # is_ioc_related_verb = verb_ancestor.lemma_ in ioc_related_verbs
+        # if is_ioc_related_verb:
+        #     has_ioc_related_ancestor_verbs = True
 
         is_any_verb_negated = is_verb_negated(verb_ancestor)
 
     if not allowed_dependency or has_whitelisted_ancestor_verbs:
         return False
 
-    if allowed_dependency and has_ioc_related_ancestor_verbs and not is_any_verb_negated:
+    if allowed_dependency and not is_any_verb_negated:
         return True
 
     return False
@@ -120,9 +123,9 @@ def get_context_terms(ioc_candidate):
         'hash-md5'      : r'^([a-fA-F\d]{32})$',
         'hash-sha1'     : r'^([a-fA-F\d]{40})$',
         'hash-sha256'   : r'^([a-fA-F\d]{64})$',
-        'ip'            : r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$',
+        'ip'            : r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}',
         'domain'        : r'^(\w\.|\w[A-Za-z0-9-]{0,61}\w\.){1,3}(?!exe|zip|dll|dat|bin|sys)[A-Za-z]{2,6}$',
-        'filename'      : r'^[\w-]+\.exe|zip|dll|dat|bin|sys$',
+        'filename'      : r'\\?[\w-]+\.[\w]+$',
         'registry key'  : r'^(HKEY_CURRENT_USER|HKCU|HKLM)\\.+$',
         'url'           : r'((?:[a-z][\w\-]+:(?:\/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]|\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\))+(?:\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:\'".,<>?«»“”‘’]))'
     }
@@ -135,18 +138,22 @@ def get_context_terms(ioc_candidate):
 
     return context_terms
 
-def get_valid_iocs(ioc_candidate):
+def get_valid_iocs(text):
     valid_iocs = []
-    context_terms = get_context_terms(ioc_candidate)
-    if not context_terms:
-        return []
+    ioc_candidates = nltk.sent_tokenize(text)
 
-    analyzed_candidate = nlp(ioc_candidate)
+    for ioc_candidate in ioc_candidates:
+        context_terms = get_context_terms(ioc_candidate)
+        if not context_terms:
+            continue
 
-    for token in analyzed_candidate:
-        if str(token) in context_terms.keys():
-            if is_valid_candidate(token):
-                valid_iocs.append(str(token))
+        analyzed_candidate = nlp(ioc_candidate)
+
+        for token in analyzed_candidate:
+            if str(token) in context_terms.keys():
+                if is_valid_candidate(token):
+                    if not is_whitelisted(token):
+                        valid_iocs.append(str(token))
 
     return valid_iocs
 
@@ -156,7 +163,61 @@ def get_ioc_candidates():
         ioc_candidates = f.readlines()
 
         # return ioc_candidates
-        return ['The following command line syntax can be used to install x64 bit elsa dlls from a 32 bit process: > %WINDIR%\sysnative\regsvr32.exe /s %WINDIR%\ELSA_x64.dll']
+        return [
+            r'''The specimen initially sent TCP SYN requests to ip address 60.10.179.100. The malware then writes the R resource data to the file C:\WINDOWS\tasksche.exe''',
+            # r'''The malware then writes the R resource data to the file C:\WINDOWS\tasksche.exe''',
+            # r'''The malware executes C:\WINDOWS\tasksche.exe /i with the CreateProcess API.''',
+            # r'''The malware then attempts to move C:\WINDOWS\tasksche.exe to C:\WINDOWS\qeriuwjhrf, replacing the original file if it exists.''',
+            # r'''The decrypted data is saved as a DLL (MD5: f351e1fcca0c4ea05fc44d15a17f8b36)''',
+            # r'''The file r.wnry are extracted from the XIA resource (3e0020fc529b1c2a061016dd2469ba96)''',
+            # r'''The most obvious indication of malware infection was the addition of a file named “serivces.exe” in “C:\Windows\System32”''',
+            # r'''The initial payload delivered through the binary named mssecsvc.exe''',
+            # r'''if the malware can connect to http://iuqerfsodp9ifjaposdfjhgosurijfaewrwergwea.com''',
+            # r'''This bootstrap DLL reads the main WannaCrypt payload from the resource section and writes it to a file C:\WINDOWS\mssecsvc.exe''',
+            # r'''This section examines a malware (hash value: aada169a1cbd822e1402991e6a9c9238) that was caught by a private honeypot''',
+        ]
+
+
+def is_private_ip(
+    candidate,
+):
+    try:
+        ip_parsed = ipaddress.IPv4Address(
+            address=candidate,
+        )
+    except ValueError:
+        return False
+    else:
+        return ip_parsed.is_private
+
+
+def is_known_process_name(
+    candidate,
+):
+    well_known_process_names = [
+        'schedlgu.exe',
+        'calc.exe',
+    ]
+    if candidate in well_known_process_names:
+        return True
+
+    return False
+
+
+def is_whitelisted(
+    candidate,
+):
+    if is_private_ip(
+        candidate=candidate.text,
+    ):
+        return True
+
+    if is_known_process_name(
+        candidate=candidate.text,
+    ):
+        return True
+
+    return False
 
 
 def main():
