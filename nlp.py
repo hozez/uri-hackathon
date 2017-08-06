@@ -87,7 +87,7 @@ def get_is_verb_applied_by_trusted_organization(
     #         return True
 
     if token.head.pos_ == 'NOUN' or token.head.pos_ == 'PROPN':
-        if str(ancestor).lower in trusted_organizatons:
+        if str(token.head).lower in trusted_organizatons:
             return True
 
     return False
@@ -181,7 +181,7 @@ def get_context_terms(ioc_candidate):
         'filename'      : r'\\?[\w_-]+(\.(exe|zip|dll|dat|bin|sys)+)+',
         'domain'        : r'^(:?[a-z0-9](:?[a-z0-9-]{,61}[a-z0-9])?)(:?\.[a-z0-9](:?[a-z0-9-]{0,61}[a-z0-9])?)*(:?\.[a-z][a-z0-9-]{0,61}[a-z0-9])$',
         'registry key'  : r'^(HKEY_CURRENT_USER|HKEY_CLASSES_ROOT|HKEY_CURRENT_CONFIG|HKEY_USERS|HKEY_LOCAL_MACHINE|HKCR|HKCC|HKCU|HKU|HKLM)\\.+$',
-        'url'           : r'^(?:(?P<protocol>http|https|hxxp|hxxps|ftp)://)?(?:((:?[a-z0-9](:?[a-z0-9-]{,61}[a-z0-9])?)(:?\.[a-z0-9](:?[a-z0-9-]{0,61}[a-z0-9])?)*(:?\.[a-z][a-z0-9-]{0,61}[a-z0-9]))|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(?P<port>:\d+)?(?P<uri>/.*)?$'
+        'url'           :r'((?:[a-z][\w\-]+:(?:\/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]|\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\))+(?:\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:\'".,<>?«»“”‘’]))'
     }
 
     for word in text.split():
