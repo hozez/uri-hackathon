@@ -47,7 +47,7 @@ def error_handler(exception):
     )
 
 
-@flask_app.route('/analyze_sentence', methods=['POST'])
+@flask_app.route('/analyze_sentence', methods=['POST', 'OPTIONS'])
 def analyze_sentence():
     request = flask.request.json
 
@@ -69,6 +69,6 @@ def analyze_sentence():
 def after_request(response):
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,OPTIONS,DELETE')
 
     return response
