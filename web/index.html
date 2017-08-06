@@ -32,17 +32,22 @@
                         </div>
                     </div>
                 </div>
+                <a id="action--clear" class="waves-effect waves-light btn">Clear</a>
+                <a id="action--scan" class="waves-effect waves-light btn"><i class="material-icons right">cloud</i>Scan</a>
             </div>
             <div class="col s4 result">
                 <h4 class="title">0 IoC found</h4>
-                <ul></ul>
+                <div class="list"></div>
+                <span id="action--copy" style="display: none" class="waves-effect waves-light btn">
+                    <i class="material-icons right">content_copy</i>Copy selected
+                </span>
             </div>
         </div>
-        <a id="action--clear" class="waves-effect waves-light btn">Clear</a>
-        <a id="action--scan" class="waves-effect waves-light btn"><i class="material-icons right">cloud</i>Scan</a>
      </div>
+    <textarea id='clipboard' style="display: none"></textarea>
 
      <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js"></script>
      <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.1/js/materialize.min.js"></script>
     <script src="app.js"></script>
 </body>

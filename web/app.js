@@ -3,6 +3,9 @@ $(document).ready(function() {
 
     $('#action--scan').on('click', onScanClick);
     $('#action--clear').on('click', onClearClick);
+    $('#action--copy').on('click', onCopyClick);
+
+    $('body').on('change','.result .list input:checkbox', onResultChecked);
 
     function onScanClick() {
         var text = $('#data--text').text();
@@ -35,13 +38,16 @@ $(document).ready(function() {
         var newText = $('#data--text').html();
         $('.result .title').text(response.iocs_count + ' IoC' + (response.iocs_count > 1 ? 's' : '') + ' found');
 
-
-        response.iocs.forEach(function(ioc) {
-            $('.result ul').append('<li>' + ioc + '</li>')
+        response.iocs.forEach(function(ioc, index) {
+            $('.result .list').append('<p><input type="checkbox" id="result_' + index + '" value="' + ioc + '" checked/><label for="result_' + index + '" title="' + ioc + '">' + ioc + '</label></p>');
             newText = highlightWord(newText, ioc);
         });
        
         $('#data--text').html(newText);
+
+        if (response.iocs_count > 0) {
+            $('#action--copy').show();
+        }
 
         setPostLoadingState();
     }
@@ -58,9 +64,10 @@ $(document).ready(function() {
     }
 
     function preRequestClean() {
-        $('.result ul').html('');
+        $('.result .list').html('');
         $('.result .title').text('0 IoC found');
         $('#data--text .highlight').removeClass('highlight');
+        $('#action--copy').hide();
     }
 
     function setLoadingState() {
@@ -74,5 +81,33 @@ $(document).ready(function() {
         $('#action--scan').removeClass('disabled');
         $('#action--clear').removeClass('disabled');
         $('#data--text').attr('contenteditable', true);
+    }
+
+    function onCopyClick() {
+        var textToCopy = [];
+
+        $('.result .list input:checkbox:checked').toArray().forEach(function(item) {
+            textToCopy.push(item.value);
+        });
+
+        copyToClipboard(textToCopy.join('\n'));
+        Materialize.toast(textToCopy.length + ' item' + (textToCopy.length > 1 ? 's' : '') + ' copied', 4000)
+    }
+
+    function copyToClipboard(text) {
+        $('#clipboard').show();
+        $('#clipboard').val(text);
+
+        $('#clipboard').select();
+        document.execCommand('copy');
+        $('#clipboard').hide();
+    }
+
+    function onResultChecked() {
+        if ($('.result .list input:checkbox:checked').toArray().length > 0) {
+            $('#action--copy').show();
+        } else {
+            $('#action--copy').hide();
+        }
     }
 });
