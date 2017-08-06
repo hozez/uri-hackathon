@@ -5,6 +5,7 @@ import spacy.symbols # nsubj, VERB, dobj
 
 nlp = spacy.load('en')
 
+
 def get_verb_ancestors(
     token,
 ):
@@ -146,6 +147,7 @@ def get_valid_iocs(ioc_candidate):
 
     return valid_iocs
 
+
 def get_ioc_candidates():
     with open("/home/uri/Desktop/hackathon/uri-hackathon/ioc_candidates.txt", 'r') as f:
         ioc_candidates = f.readlines()
@@ -153,12 +155,18 @@ def get_ioc_candidates():
         # return ioc_candidates
         return ['The following command line syntax can be used to install x64 bit elsa dlls from a 32 bit process: > %WINDIR%\sysnative\regsvr32.exe /s %WINDIR%\ELSA_x64.dll']
 
-ioc_candidates = get_ioc_candidates()
-for ioc_candidate in ioc_candidates:
-    try:
-        valid_iocs = get_valid_iocs(ioc_candidate)
-        print(ioc_candidate.strip())
-        print(valid_iocs)
-        print()
-    except Exception as ex:
-        print(ex)
+
+def main():
+    ioc_candidates = get_ioc_candidates()
+    for ioc_candidate in ioc_candidates:
+        try:
+            valid_iocs = get_valid_iocs(ioc_candidate)
+            print(ioc_candidate.strip())
+            print(valid_iocs)
+            print()
+        except Exception as ex:
+            print(ex)
+
+
+if __name__ == '__main__':
+    main()
