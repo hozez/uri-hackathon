@@ -1,6 +1,7 @@
 import spacy
 import spacy.symbols # nsubj, VERB, dobj
 
+
 nlp = spacy.load('en')
 doc = nlp(u'The malware does not write the file wannacry.exe to the server')
 
@@ -58,7 +59,6 @@ def is_valid_candidate(
         'patch',
         'release',
     ]
-    import pudb; pudb.set_trace()
     allowed_dependency = np.dep_ in allowed_deps
     verb_ancestors = get_verb_ancestors(np)
 
@@ -81,6 +81,8 @@ def is_valid_candidate(
 
     if allowed_dependency and has_ioc_related_ancestor_verbs and not is_any_verb_negated:
         return True
+
+    return False
 
 
 # get_y
