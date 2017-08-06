@@ -124,10 +124,10 @@ def get_context_terms(ioc_candidate):
         'hash-sha1'     : r'^([a-fA-F\d]{40})$',
         'hash-sha256'   : r'^([a-fA-F\d]{64})$',
         'ip'            : r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}',
-        'domain'        : r'^(\w\.|\w[A-Za-z0-9-]{0,61}\w\.){1,3}(?!exe|zip|dll|dat|bin|sys)[A-Za-z]{2,6}$',
-        'filename'      : r'\\?[\w-]+\.[\w]+',
-        'registry key'  : r'^(HKEY_CURRENT_USER|HKCU|HKLM)\\.+$',
-        'url'           : r'((?:[a-z][\w\-]+:(?:\/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]|\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\))+(?:\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:\'".,<>?«»“”‘’]))'
+        'filename'      : r'\\?[\w_-]+(\.(exe|zip|dll|dat|bin|sys)+)+',
+        'domain'        : r'^(:?[a-z0-9](:?[a-z0-9-]{,61}[a-z0-9])?)(:?\.[a-z0-9](:?[a-z0-9-]{0,61}[a-z0-9])?)*(:?\.[a-z][a-z0-9-]{0,61}[a-z0-9])$',
+        'registry key'  : r'^(HKEY_CURRENT_USER|HKEY_CLASSES_ROOT|HKEY_CURRENT_CONFIG|HKEY_USERS|HKEY_LOCAL_MACHINE|HKCR|HKCC|HKCU|HKU|HKLM)\\.+$',
+        'url'           : r'^(?:(?P<protocol>http|https|hxxp|hxxps|ftp)://)?(?:((:?[a-z0-9](:?[a-z0-9-]{,61}[a-z0-9])?)(:?\.[a-z0-9](:?[a-z0-9-]{0,61}[a-z0-9])?)*(:?\.[a-z][a-z0-9-]{0,61}[a-z0-9]))|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(?P<port>:\d+)?(?P<uri>/.*)?$'
     }
 
     for word in text.split():
